@@ -9,24 +9,46 @@ import UIKit
 
 class ViewController: UIViewController {
 
+    typealias DataSource = UICollectionViewDiffableDataSource<Int, String>
+    typealias Snapshot = NSDiffableDataSourceSnapshot<Int, String>
+    
+    private var dataSource: DataSource!
+    
     private lazy var notesCollectionView: UICollectionView = {
-        
-        let configurator = UICollectionViewCompositionalLayoutConfiguration()
-        let size = NSCollectionLayoutSize(widthDimension: .estimated(1.0), heightDimension: .estimated(1.0))
-        let group = NSCollectionLayoutGroup(layoutSize: size)
-        let section = NSCollectionLayoutSection(group: group)
-        let layout = UICollectionViewCompositionalLayout(section: section, configuration: configurator)
-        let collectionView = UICollectionView(frame: view.frame, collectionViewLayout: layout)
-
+        let listLayout = listLayout()
+        let collectionView = UICollectionView(frame: view.frame, collectionViewLayout: listLayout)
         return collectionView
     }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
+        
+        let cellRegistration = UICollectionView.CellRegistration { (cell: UICollectionViewListCell, indexPath: IndexPath, itemIdentifier: String) in
+            let reminder = Note.sampleData[indexPath.item]
+            var contentConfiguration = cell.defaultContentConfiguration()
+            contentConfiguration.text = reminder.title
+            cell.contentConfiguration = contentConfiguration
+        }
+        
+        dataSource = DataSource(collectionView: notesCollectionView) { (collectionView: UICollectionView, indexPath: IndexPath, itemIdentifier: String) in
+            return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: itemIdentifier)
+        }
+        
+        var snapshot = Snapshot()
+        snapshot.appendSections([0])
+        snapshot.appendItems(Note.sampleData.map { $0.title })
+        dataSource.apply(snapshot)
+        
+        notesCollectionView.dataSource = dataSource
         view.addSubview(notesCollectionView)
     }
-
-
+    
+    private func listLayout() -> UICollectionViewCompositionalLayout {
+        var listConfiguration = UICollectionLayoutListConfiguration(appearance: .grouped)
+        listConfiguration.showsSeparators = false
+        listConfiguration.backgroundColor = .clear
+        return UICollectionViewCompositionalLayout.list(using: listConfiguration)
+    }
 }
 
