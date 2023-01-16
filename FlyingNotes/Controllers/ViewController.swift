@@ -56,9 +56,9 @@ class ViewController: UIViewController {
 //MARK: - private
     @objc
     private func didPressAddButton(_ sender: UIButton) {
-        let detail = DetailNoteViewController(style: .new) { newNote in
-            self.notes.insert(newNote, at: 0)
-            self.updateSnapshot()
+        let detail = DetailNoteViewController(style: .new) { [weak self] newNote in
+            self?.notes.insert(newNote, at: 0)
+            self?.updateSnapshot()
         }
         navigationController?.pushViewController(detail, animated: true)
     }
