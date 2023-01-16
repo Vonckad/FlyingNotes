@@ -6,14 +6,15 @@
 //
 
 import UIKit
+import CoreData
 
 class ViewController: UIViewController {
 
-    typealias DataSource = UICollectionViewDiffableDataSource<Int, Note>
-    typealias Snapshot = NSDiffableDataSourceSnapshot<Int, Note>
+    typealias DataSource = UICollectionViewDiffableDataSource<Int, Note.ID>
+    typealias Snapshot = NSDiffableDataSourceSnapshot<Int, Note.ID>
     
     private lazy var dataSource: DataSource = self.makeDataSource()
-    private var notes = Note.sampleData
+    private var notes: [Note] = []
     
     private lazy var notesCollectionView: UICollectionView = {
         let listLayout = listLayout()
@@ -22,6 +23,7 @@ class ViewController: UIViewController {
         return collectionView
     }()
     
+//MARK: - LifeCycle
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
@@ -32,19 +34,32 @@ class ViewController: UIViewController {
         addButton.accessibilityLabel = NSLocalizedString("Add reminder", comment: "Add button accessibility label")
         navigationItem.rightBarButtonItem = addButton
         
-        DataManager.shared.addItem(note: Note.sampleData[0])
+        getNotes()
         
-        updateSnapshot()
         view.addSubview(notesCollectionView)
     }
     
+    func getNotes() {
+        let noteFetch: NSFetchRequest<Note> = Note.fetchRequest()
+        let sortByDate = NSSortDescriptor(key: #keyPath(Note.createDate), ascending: false)
+        noteFetch.sortDescriptors = [sortByDate]
+        do {
+            let managedContext = AppDelegate.sharedAppDelegate.coreDataStack.managedContext
+            let results = try managedContext.fetch(noteFetch)
+            notes = results
+            self.updateSnapshot()
+        } catch let error as NSError {
+            print("Fetch error: \(error) description: \(error.userInfo)")
+        }
+    }
+    
+//MARK: - private
     @objc
     private func didPressAddButton(_ sender: UIButton) {
-        DataManager.shared.addItem(note: Note.sampleData[1])
-        updateSnapshot()
-        let detail = UIViewController()
-        detail.view.backgroundColor = .red
-        detail.title = "new"
+        let detail = DetailNoteViewController(style: .new) { newNote in
+            self.notes.insert(newNote, at: 0)
+            self.updateSnapshot()
+        }
         navigationController?.pushViewController(detail, animated: true)
     }
     
@@ -55,18 +70,21 @@ class ViewController: UIViewController {
         return UICollectionViewCompositionalLayout.list(using: listConfiguration)
     }
     
-    func updateSnapshot() {
+    private func updateSnapshot() {
         var snapshot = Snapshot()
         snapshot.appendSections([0])
-        snapshot.appendItems(DataManager.shared.loadItems())
+        snapshot.appendItems(notes.map { $0.id })
+        snapshot.reloadItems(notes.map { $0.id })
         dataSource.apply(snapshot)
     }
     
-    private func noteCellRegistration() -> UICollectionView.CellRegistration<UICollectionViewListCell, Note> {
+    private func noteCellRegistration() -> UICollectionView.CellRegistration<UICollectionViewListCell, Note.ID> {
         return .init { cell, _, item in
+            let note = self.notes[self.notes.indexOfNote(with: item)]
+            
             var configuration = cell.defaultContentConfiguration()
-            configuration.text = item.title
-            configuration.secondaryText = item.dueDate.dayAndTimeText
+            configuration.text = note.title
+            configuration.secondaryText = note.createDate.dayAndTimeText
             configuration.textProperties.color = .darkGray
             cell.contentConfiguration = configuration
             
@@ -78,7 +96,7 @@ class ViewController: UIViewController {
     
     private func makeDataSource() -> DataSource {
         let cellRegistration = self.noteCellRegistration()
-        return DataSource(collectionView: notesCollectionView, cellProvider: { collectionView, indexPath, itemIdentifier in
+        return DataSource(collectionView: notesCollectionView, cellProvider: { (collectionView: UICollectionView, indexPath: IndexPath, itemIdentifier: Note.ID) in
             return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: itemIdentifier)
         })
     }
@@ -89,9 +107,7 @@ extension ViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         notesCollectionView.deselectItem(at: indexPath, animated: true)
         
-        let detail = UIViewController()
-        detail.view.backgroundColor = .green
-        detail.title = notes[indexPath.item].title
+        let detail = DetailNoteViewController(style: .detail, note: notes[indexPath.item])
         navigationController?.pushViewController(detail, animated: true)
     }
 }
