@@ -57,8 +57,9 @@ class ViewController: UIViewController {
     @objc
     private func didPressAddButton(_ sender: UIButton) {
         let detail = DetailNoteViewController(style: .new) { [weak self] newNote in
-            self?.notes.insert(newNote, at: 0)
-            self?.updateSnapshot()
+            guard let self = self else { return }
+            self.notes.insert(newNote, at: 0)
+            self.updateSnapshot()
         }
         navigationController?.pushViewController(detail, animated: true)
     }
@@ -66,15 +67,15 @@ class ViewController: UIViewController {
     private func listLayout() -> UICollectionViewCompositionalLayout {
         var listConfiguration = UICollectionLayoutListConfiguration(appearance: .grouped)
         listConfiguration.showsSeparators = false
+        listConfiguration.trailingSwipeActionsConfigurationProvider = makeSwipeActions
         listConfiguration.backgroundColor = .clear
         return UICollectionViewCompositionalLayout.list(using: listConfiguration)
     }
     
-    private func updateSnapshot() {
+    private func updateSnapshot(reloading ids: [Note.ID] = []) {
         var snapshot = Snapshot()
         snapshot.appendSections([0])
         snapshot.appendItems(notes.map { $0.id })
-        snapshot.reloadItems(notes.map { $0.id })
         dataSource.apply(snapshot)
     }
     
@@ -99,6 +100,19 @@ class ViewController: UIViewController {
         return DataSource(collectionView: notesCollectionView, cellProvider: { (collectionView: UICollectionView, indexPath: IndexPath, itemIdentifier: Note.ID) in
             return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: itemIdentifier)
         })
+    }
+    
+    private func makeSwipeActions(for indexPath: IndexPath?) -> UISwipeActionsConfiguration? {
+        guard let indexPath = indexPath else { return nil }
+        let deleteActionTitle = NSLocalizedString("Delete", comment: "Delete action title")
+        let deleteAction = UIContextualAction(style: .destructive, title: deleteActionTitle) { [weak self] _, _, _ in
+            guard let self = self else { return }
+            AppDelegate.sharedAppDelegate.coreDataStack.managedContext.delete(self.notes[indexPath.item])
+            self.notes.remove(at: indexPath.item)
+            self.updateSnapshot()
+            AppDelegate.sharedAppDelegate.coreDataStack.saveContext()
+        }
+        return UISwipeActionsConfiguration(actions: [deleteAction])
     }
 }
 

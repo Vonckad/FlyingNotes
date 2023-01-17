@@ -12,10 +12,8 @@
 		C9A79CC229735CF000FF30E9 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A79CC129735CF000FF30E9 /* ViewController.swift */; };
 		C9A79CC729735CF100FF30E9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C9A79CC629735CF100FF30E9 /* Assets.xcassets */; };
 		C9A79CCA29735CF100FF30E9 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C9A79CC829735CF100FF30E9 /* LaunchScreen.storyboard */; };
-		C9A79CD329735FD100FF30E9 /* Note.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A79CD229735FD100FF30E9 /* Note.swift */; };
 		C9A79CD529747D9800FF30E9 /* DataExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A79CD429747D9800FF30E9 /* DataExtension.swift */; };
 		C9A79CDA2974BE9A00FF30E9 /* NoteModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = C9A79CD82974BE9A00FF30E9 /* NoteModel.xcdatamodeld */; };
-		C9A79CE02974C0A100FF30E9 /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A79CDF2974C0A100FF30E9 /* DataManager.swift */; };
 		C9A79CE82975432400FF30E9 /* Note+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A79CE62975432400FF30E9 /* Note+CoreDataClass.swift */; };
 		C9A79CE92975432400FF30E9 /* Note+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A79CE72975432400FF30E9 /* Note+CoreDataProperties.swift */; };
 		C9A79CEB297544A000FF30E9 /* CoreDataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A79CEA297544A000FF30E9 /* CoreDataStack.swift */; };
@@ -30,10 +28,8 @@
 		C9A79CC629735CF100FF30E9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C9A79CC929735CF100FF30E9 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		C9A79CCB29735CF100FF30E9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		C9A79CD229735FD100FF30E9 /* Note.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Note.swift; sourceTree = "<group>"; };
 		C9A79CD429747D9800FF30E9 /* DataExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExtension.swift; sourceTree = "<group>"; };
 		C9A79CD92974BE9A00FF30E9 /* NoteModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = NoteModel.xcdatamodel; sourceTree = "<group>"; };
-		C9A79CDF2974C0A100FF30E9 /* DataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataManager.swift; sourceTree = "<group>"; };
 		C9A79CE62975432400FF30E9 /* Note+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Note+CoreDataClass.swift"; sourceTree = "<group>"; };
 		C9A79CE72975432400FF30E9 /* Note+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Note+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		C9A79CEA297544A000FF30E9 /* CoreDataStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataStack.swift; sourceTree = "<group>"; };
@@ -75,21 +71,12 @@
 				C9A79CE5297542A700FF30E9 /* CoreData */,
 				C9A79CD72974B60800FF30E9 /* Controllers */,
 				C9A79CD629747DA100FF30E9 /* Extension */,
-				C9A79CD129735FA700FF30E9 /* Models */,
 				C9A79CC629735CF100FF30E9 /* Assets.xcassets */,
 				C9A79CC829735CF100FF30E9 /* LaunchScreen.storyboard */,
 				C9A79CCB29735CF100FF30E9 /* Info.plist */,
 				C9A79CD82974BE9A00FF30E9 /* NoteModel.xcdatamodeld */,
 			);
 			path = FlyingNotes;
-			sourceTree = "<group>";
-		};
-		C9A79CD129735FA700FF30E9 /* Models */ = {
-			isa = PBXGroup;
-			children = (
-				C9A79CD229735FD100FF30E9 /* Note.swift */,
-			);
-			path = Models;
 			sourceTree = "<group>";
 		};
 		C9A79CD629747DA100FF30E9 /* Extension */ = {
@@ -114,7 +101,6 @@
 			children = (
 				C9A79CE62975432400FF30E9 /* Note+CoreDataClass.swift */,
 				C9A79CE72975432400FF30E9 /* Note+CoreDataProperties.swift */,
-				C9A79CDF2974C0A100FF30E9 /* DataManager.swift */,
 				C9A79CEA297544A000FF30E9 /* CoreDataStack.swift */,
 			);
 			path = CoreData;
@@ -193,8 +179,6 @@
 				C9A79CC229735CF000FF30E9 /* ViewController.swift in Sources */,
 				C9A79CBE29735CF000FF30E9 /* AppDelegate.swift in Sources */,
 				C9A79CC029735CF000FF30E9 /* SceneDelegate.swift in Sources */,
-				C9A79CE02974C0A100FF30E9 /* DataManager.swift in Sources */,
-				C9A79CD329735FD100FF30E9 /* Note.swift in Sources */,
 				C9A79CEB297544A000FF30E9 /* CoreDataStack.swift in Sources */,
 				C9A79CE82975432400FF30E9 /* Note+CoreDataClass.swift in Sources */,
 				C9A79CD529747D9800FF30E9 /* DataExtension.swift in Sources */,
