@@ -37,6 +37,13 @@ class ViewController: UIViewController {
         getNotes()
         
         view.addSubview(notesCollectionView)
+        notesCollectionView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            notesCollectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            notesCollectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            notesCollectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            notesCollectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+        ])
     }
     
     func getNotes() {
@@ -65,8 +72,7 @@ class ViewController: UIViewController {
     }
     
     private func listLayout() -> UICollectionViewCompositionalLayout {
-        var listConfiguration = UICollectionLayoutListConfiguration(appearance: .grouped)
-        listConfiguration.showsSeparators = false
+        var listConfiguration = UICollectionLayoutListConfiguration(appearance: .sidebarPlain)
         listConfiguration.trailingSwipeActionsConfigurationProvider = makeSwipeActions
         listConfiguration.backgroundColor = .clear
         return UICollectionViewCompositionalLayout.list(using: listConfiguration)
@@ -84,7 +90,7 @@ class ViewController: UIViewController {
             let note = self.notes[self.notes.indexOfNote(with: item)]
             
             var configuration = cell.defaultContentConfiguration()
-            configuration.text = note.title
+            configuration.text = note.notes
             configuration.secondaryText = note.createDate.dayAndTimeText
             configuration.textProperties.color = .darkGray
             cell.contentConfiguration = configuration
