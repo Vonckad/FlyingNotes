@@ -28,10 +28,15 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .white
         title = "Заметки"
-        navigationController?.navigationBar.prefersLargeTitles = true
+//        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationController?.navigationBar.barTintColor = .white
+        navigationController?.navigationBar.titleTextAttributes = [.foregroundColor : UIColor.darkGray]
+        navigationController?.navigationBar.largeTitleTextAttributes = [.foregroundColor : UIColor.darkGray]
+        navigationController?.navigationBar.tintColor = .darkGray
         
         let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(didPressAddButton(_:)))
         addButton.accessibilityLabel = NSLocalizedString("Add reminder", comment: "Add button accessibility label")
+        addButton.tintColor = .darkGray
         navigationItem.rightBarButtonItem = addButton
         
         getNotes()
@@ -46,7 +51,19 @@ class ViewController: UIViewController {
         ])
     }
     
-    func getNotes() {
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationItem.largeTitleDisplayMode = .always
+        navigationController?.navigationBar.prefersLargeTitles = true
+    }
+//    
+//    override func viewWillDisappear(_ animated: Bool) {
+//        super.viewWillDisappear(animated)
+//        navigationController?.navigationBar.prefersLargeTitles = false
+//    }
+    
+//MARK: - private
+    private func getNotes() {
         let noteFetch: NSFetchRequest<Note> = Note.fetchRequest()
         let sortByDate = NSSortDescriptor(key: #keyPath(Note.createDate), ascending: false)
         noteFetch.sortDescriptors = [sortByDate]
@@ -60,7 +77,6 @@ class ViewController: UIViewController {
         }
     }
     
-//MARK: - private
     @objc
     private func didPressAddButton(_ sender: UIButton) {
         let detail = DetailNoteViewController(style: .new) { [weak self] newNote in
@@ -92,11 +108,14 @@ class ViewController: UIViewController {
             var configuration = cell.defaultContentConfiguration()
             configuration.text = note.notes
             configuration.secondaryText = note.createDate.dayAndTimeText
+            configuration.secondaryTextProperties.color = .gray
             configuration.textProperties.color = .darkGray
+            configuration.textProperties.numberOfLines = 0
             cell.contentConfiguration = configuration
             
             var backgroundConfig = UIBackgroundConfiguration.listPlainCell()
             backgroundConfig.cornerRadius = 8
+            backgroundConfig.backgroundColor = .white
             cell.backgroundConfiguration = backgroundConfig
         }
     }
@@ -126,7 +145,6 @@ class ViewController: UIViewController {
 extension ViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         notesCollectionView.deselectItem(at: indexPath, animated: true)
-        
         let detail = DetailNoteViewController(style: .detail, note: notes[indexPath.item])
         navigationController?.pushViewController(detail, animated: true)
     }
