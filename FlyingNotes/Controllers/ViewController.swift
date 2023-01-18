@@ -14,7 +14,30 @@ class ViewController: UIViewController {
     typealias Snapshot = NSDiffableDataSourceSnapshot<Int, Note.ID>
     
     private lazy var dataSource: DataSource = self.makeDataSource()
-    private var notes: [Note] = []
+    private var notes: [Note] = {
+        var notesArray: [Note] = []
+        let defaults = UserDefaults.standard
+        if !defaults.bool(forKey: "First Launch") {
+        
+            defaults.set(true, forKey: "First Launch")
+            
+            let managedContext = AppDelegate.sharedAppDelegate.coreDataStack.managedContext
+            let startNote = Note(context: managedContext)
+            startNote.id = UUID()
+            startNote.notes =
+"""
+Начало работы в приложении «FlyingNotes»
+
+В приложении «FlyingNotes»  можно быстро записать свои мысли.
+"""
+            startNote.createDate = Date()
+    
+            notesArray.append(startNote)
+    
+            AppDelegate.sharedAppDelegate.coreDataStack.saveContext()
+        }
+        return notesArray
+    }()
     
     private lazy var notesCollectionView: UICollectionView = {
         let listLayout = listLayout()
@@ -28,19 +51,31 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .white
         title = "Заметки"
-//        navigationController?.navigationBar.prefersLargeTitles = true
+        addRightBarButtonItem()
+        getNotes()
+//        checkFirsLaunchApp()
+        setupLayout()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationItem.largeTitleDisplayMode = .always
+        navigationController?.navigationBar.prefersLargeTitles = true
         navigationController?.navigationBar.barTintColor = .white
         navigationController?.navigationBar.titleTextAttributes = [.foregroundColor : UIColor.darkGray]
         navigationController?.navigationBar.largeTitleTextAttributes = [.foregroundColor : UIColor.darkGray]
         navigationController?.navigationBar.tintColor = .darkGray
-        
+    }
+    
+//MARK: - private
+    private func addRightBarButtonItem() {
         let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(didPressAddButton(_:)))
         addButton.accessibilityLabel = NSLocalizedString("Add reminder", comment: "Add button accessibility label")
         addButton.tintColor = .darkGray
         navigationItem.rightBarButtonItem = addButton
-        
-        getNotes()
-        
+    }
+
+    private func setupLayout() {
         view.addSubview(notesCollectionView)
         notesCollectionView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -51,18 +86,6 @@ class ViewController: UIViewController {
         ])
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        navigationItem.largeTitleDisplayMode = .always
-        navigationController?.navigationBar.prefersLargeTitles = true
-    }
-//    
-//    override func viewWillDisappear(_ animated: Bool) {
-//        super.viewWillDisappear(animated)
-//        navigationController?.navigationBar.prefersLargeTitles = false
-//    }
-    
-//MARK: - private
     private func getNotes() {
         let noteFetch: NSFetchRequest<Note> = Note.fetchRequest()
         let sortByDate = NSSortDescriptor(key: #keyPath(Note.createDate), ascending: false)
@@ -110,7 +133,7 @@ class ViewController: UIViewController {
             configuration.secondaryText = note.createDate.dayAndTimeText
             configuration.secondaryTextProperties.color = .gray
             configuration.textProperties.color = .darkGray
-            configuration.textProperties.numberOfLines = 0
+            configuration.textProperties.numberOfLines = 3
             cell.contentConfiguration = configuration
             
             var backgroundConfig = UIBackgroundConfiguration.listPlainCell()
