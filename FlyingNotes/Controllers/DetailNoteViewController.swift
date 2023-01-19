@@ -66,6 +66,8 @@ class DetailNoteViewController: UIViewController {
         super.viewDidDisappear(animated)
         if style == .new && !noteTextView.text.isEmpty {
            createNewNote()
+        } else {
+            updateNote()
         }
     }
     
@@ -92,6 +94,16 @@ class DetailNoteViewController: UIViewController {
             comptelion(newNote)
         }
 
+        AppDelegate.sharedAppDelegate.coreDataStack.saveContext()
+    }
+    
+    private func updateNote() {
+        guard let note = note else { return }
+        note.notes = noteTextView.text
+        
+        if let comptelion = self.comptelion {
+            comptelion(note)
+        }
         AppDelegate.sharedAppDelegate.coreDataStack.saveContext()
     }
 }

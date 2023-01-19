@@ -31,9 +31,7 @@ class ViewController: UIViewController {
 В приложении «FlyingNotes»  можно быстро записать свои мысли.
 """
             startNote.createDate = Date()
-    
             notesArray.append(startNote)
-    
             AppDelegate.sharedAppDelegate.coreDataStack.saveContext()
         }
         return notesArray
@@ -53,7 +51,6 @@ class ViewController: UIViewController {
         title = "Заметки"
         addRightBarButtonItem()
         getNotes()
-//        checkFirsLaunchApp()
         setupLayout()
     }
     
@@ -121,6 +118,9 @@ class ViewController: UIViewController {
         var snapshot = Snapshot()
         snapshot.appendSections([0])
         snapshot.appendItems(notes.map { $0.id })
+        if !ids.isEmpty {
+            snapshot.reloadItems(ids)
+        }
         dataSource.apply(snapshot)
     }
     
@@ -169,6 +169,12 @@ extension ViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         notesCollectionView.deselectItem(at: indexPath, animated: true)
         let detail = DetailNoteViewController(style: .detail, note: notes[indexPath.item])
+        { [weak self] updatedNote in
+            guard let self = self else { return }
+            let index = self.notes.indexOfNote(with: updatedNote.id)
+            self.notes[index] = updatedNote
+            self.updateSnapshot(reloading: [updatedNote.id])
+        }
         navigationController?.pushViewController(detail, animated: true)
     }
 }
