@@ -19,6 +19,7 @@ extension Note {
     @NSManaged public var notes: String
     @NSManaged public var createDate: Date
     @NSManaged public var id: UUID
+    @NSManaged public var imageData: Data
 }
 
 extension Note : Identifiable {

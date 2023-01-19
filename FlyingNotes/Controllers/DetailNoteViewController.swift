@@ -27,6 +27,16 @@ class DetailNoteViewController: UIViewController {
         textView.textColor = .darkGray
         textView.clipsToBounds = true
         textView.alwaysBounceVertical = true
+        let bar = UIToolbar()
+        
+//        let action = UIBarButtonItem(systemItem: UIBarButtonItem.SystemItem.action)
+//        let edit = UIBarButtonItem(systemItem: UIBarButtonItem.SystemItem.edit)
+//        let bookmarks = UIBarButtonItem(systemItem: UIBarButtonItem.SystemItem.bookmarks)
+        let addImageBarItem = UIBarButtonItem(title: "image", style: UIBarButtonItem.Style.plain, target: nil, action: #selector(showPickerImage))
+        bar.items = [addImageBarItem]
+        
+        bar.sizeToFit()
+        textView.inputAccessoryView = bar
         return textView
     }()
     
@@ -46,7 +56,14 @@ class DetailNoteViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .white
         navigationController?.navigationItem.largeTitleDisplayMode = .never
-        noteTextView.text = style == .detail ? note?.notes : ""
+        if style == .detail {
+            if let note = note {
+                noteTextView.text = note.notes
+                if let image = UIImage(data: note.imageData) {
+                    addImageInTextView(image: image)
+                }
+            }
+        }
         setupLayout()
     }
     
@@ -89,6 +106,9 @@ class DetailNoteViewController: UIViewController {
         newNote.id = note?.id ?? UUID()
         newNote.notes = noteTextView.text
         newNote.createDate = Date()
+        if let image = getImagesFromTextView().first, let imageData = image.pngData() {
+            newNote.imageData = imageData
+        }
         
         if let comptelion = self.comptelion {
             comptelion(newNote)
@@ -105,5 +125,62 @@ class DetailNoteViewController: UIViewController {
             comptelion(note)
         }
         AppDelegate.sharedAppDelegate.coreDataStack.saveContext()
+    }
+    
+    @objc
+    private func showPickerImage() {
+     let pickerImage = UIImagePickerController()
+        pickerImage.modalPresentationStyle = .currentContext
+        pickerImage.allowsEditing = true
+        pickerImage.mediaTypes = ["public.image"]
+        pickerImage.sourceType = .photoLibrary
+        pickerImage.delegate = self
+        present(pickerImage, animated: true)
+    }
+}
+
+extension DetailNoteViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        
+        guard let image = info[.editedImage] as? UIImage else { return }
+        addImageInTextView(image: image)
+        picker.dismiss(animated: true, completion: nil)
+    }
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true, completion: nil)
+    }
+    
+    private func addImageInTextView(image: UIImage) {
+        let textAttachment = NSTextAttachment(image: image)
+        let oldWidth = textAttachment.image!.size.width
+        let scaleFactor = oldWidth / (noteTextView.frame.size.width - 50)
+        
+        textAttachment.image = UIImage(cgImage: textAttachment.image!.cgImage!, scale: scaleFactor, orientation: .up)
+        let attrStringWithImage = NSAttributedString(attachment: textAttachment)
+        noteTextView.textStorage.insert(attrStringWithImage, at: noteTextView.selectedRange.location)
+        noteTextView.font = .systemFont(ofSize: 24, weight: .regular)
+    }
+    
+    private func getImagesFromTextView() -> [UIImage] {
+        var imagesArray = [UIImage]()
+
+        noteTextView.attributedText.enumerateAttribute(NSAttributedString.Key.attachment, in: NSRange(location: 0, length: noteTextView.attributedText.length), options: [], using: {(value,range,stop) -> Void in
+                    if (value is NSTextAttachment) {
+                        let attachment: NSTextAttachment? = (value as? NSTextAttachment)
+                        var image: UIImage? = nil
+
+                        if ((attachment?.image) != nil) {
+                            image = attachment?.image
+                        } else {
+                            image = attachment?.image(forBounds: (attachment?.bounds)!, textContainer: nil, characterIndex: range.location)
+                        }
+
+                        if let image = image {
+                          imagesArray.append(image)
+                        }
+                    }
+                })
+        return imagesArray
     }
 }
