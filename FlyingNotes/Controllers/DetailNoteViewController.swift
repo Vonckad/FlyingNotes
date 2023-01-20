@@ -20,7 +20,7 @@ class DetailNoteViewController: UIViewController {
     
     private lazy var noteTextView: UITextView = {
         let textView = UITextView(frame: view.bounds)
-        textView.font = .systemFont(ofSize: 24, weight: .regular)
+        textView.font = .systemFont(ofSize: 20, weight: .regular)
         textView.textContainerInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
         textView.keyboardDismissMode = .onDrag
         textView.backgroundColor = .white
@@ -29,15 +29,17 @@ class DetailNoteViewController: UIViewController {
         textView.alwaysBounceVertical = true
         textView.delegate = self
         
-        let bar = UIToolbar()
-        let flexibleSpace = UIBarButtonItem(systemItem: UIBarButtonItem.SystemItem.fixedSpace)
-        let addImageBarItem = UIBarButtonItem(title: "image", style: UIBarButtonItem.Style.plain, target: nil, action: #selector(showPickerImage))
-        bar.items = [addImageBarItem, flexibleSpace]
-        
+        let bar = UIToolbar(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 35))
+        let flexibleSpace = UIBarButtonItem(systemItem: UIBarButtonItem.SystemItem.flexibleSpace)
+        let photoItem = UIBarButtonItem(barButtonSystemItem: .camera, target: self, action: #selector(showPickerImage))
+        photoItem.tintColor = .darkGray
+        bar.setItems([flexibleSpace, photoItem], animated: true)
         bar.sizeToFit()
         textView.inputAccessoryView = bar
         return textView
     }()
+    
+    let bacgroundColor = UIColor.init(red: 243/255, green: 242/255, blue: 247/255, alpha: 1.0)
     
 //MARK: - LifeCycle
     init(style: DetailStyle, note: Note? = nil, comptelion: ((Note) -> ())? = nil) {
@@ -53,25 +55,24 @@ class DetailNoteViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = bacgroundColor
         navigationController?.navigationItem.largeTitleDisplayMode = .never
         
         if style == .detail {
             if let note = note {
                 noteTextView.text = note.notes
-                print(#line)
-                getImageFromNote(note: note)//.forEach {addImageInTextView(image: $0)}
+                getImageFromNote(note: note)
             }
         }
         
         setupLayout()
-        
         noteTextView.layoutManager.allowsNonContiguousLayout = false
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationItem.largeTitleDisplayMode = .never
+        noteTextView.layer.cornerRadius = 8
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -160,6 +161,7 @@ class DetailNoteViewController: UIViewController {
     }
 }
 
+//MARK: - UIImagePickerControllerDelegate, UINavigationControllerDelegate
 extension DetailNoteViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         
@@ -180,7 +182,7 @@ extension DetailNoteViewController: UIImagePickerControllerDelegate, UINavigatio
         textAttachment.image = UIImage(cgImage: textAttachment.image!.cgImage!, scale: scaleFactor, orientation: .up)
         let attrStringWithImage = NSAttributedString(attachment: textAttachment)
         noteTextView.textStorage.insert(attrStringWithImage, at: noteTextView.selectedRange.location)
-        noteTextView.font = .systemFont(ofSize: 24, weight: .regular)
+        noteTextView.font = .systemFont(ofSize: 20, weight: .regular)
     }
     
     private func getImagesFromTextView() -> [UIImage] {
@@ -221,6 +223,7 @@ extension DetailNoteViewController: UIImagePickerControllerDelegate, UINavigatio
     }
 }
 
+//MARK: - UITextViewDelegate
 extension DetailNoteViewController: UITextViewDelegate {
 //    func textViewDidBeginEditing(_ textView: UITextView) {
 //        textView.setContentOffset(CGPoint(x: 0, y: textView.center.y / 2), animated: true)

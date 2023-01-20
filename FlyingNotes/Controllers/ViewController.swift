@@ -41,10 +41,12 @@ class ViewController: UIViewController {
         return collectionView
     }()
     
+    let bacgroundColor = UIColor.init(red: 243/255, green: 242/255, blue: 247/255, alpha: 1.0)
+    
 //MARK: - LifeCycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = bacgroundColor
         title = "Заметки"
         addRightBarButtonItem()
         getNotes()
@@ -55,7 +57,7 @@ class ViewController: UIViewController {
         super.viewWillAppear(animated)
         navigationItem.largeTitleDisplayMode = .always
         navigationController?.navigationBar.prefersLargeTitles = true
-        navigationController?.navigationBar.barTintColor = .white
+        navigationController?.navigationBar.barTintColor = bacgroundColor
         navigationController?.navigationBar.titleTextAttributes = [.foregroundColor : UIColor.darkGray]
         navigationController?.navigationBar.largeTitleTextAttributes = [.foregroundColor : UIColor.darkGray]
         navigationController?.navigationBar.tintColor = .darkGray
@@ -96,9 +98,10 @@ class ViewController: UIViewController {
     }
     
     private func listLayout() -> UICollectionViewCompositionalLayout {
-        var listConfiguration = UICollectionLayoutListConfiguration(appearance: .sidebarPlain)
+        var listConfiguration = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
         listConfiguration.trailingSwipeActionsConfigurationProvider = makeSwipeActions
-        listConfiguration.backgroundColor = .clear
+        listConfiguration.backgroundColor = bacgroundColor
+        listConfiguration.separatorConfiguration.color = .darkGray
         return UICollectionViewCompositionalLayout.list(using: listConfiguration)
     }
     
@@ -120,12 +123,13 @@ class ViewController: UIViewController {
             configuration.text = note.notes
             configuration.secondaryText = note.createDate.dayAndTimeText
             configuration.secondaryTextProperties.color = .gray
+            configuration.secondaryTextProperties.font = UIFont.systemFont(ofSize: 13)
+            configuration.textProperties.font = UIFont.systemFont(ofSize: 20)
             configuration.textProperties.color = .darkGray
-            configuration.textProperties.numberOfLines = 3
+            configuration.textProperties.numberOfLines = 1
             cell.contentConfiguration = configuration
             
             var backgroundConfig = UIBackgroundConfiguration.listPlainCell()
-            backgroundConfig.cornerRadius = 8
             backgroundConfig.backgroundColor = .white
             cell.backgroundConfiguration = backgroundConfig
         }
