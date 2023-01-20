@@ -27,13 +27,12 @@ class DetailNoteViewController: UIViewController {
         textView.textColor = .darkGray
         textView.clipsToBounds = true
         textView.alwaysBounceVertical = true
-        let bar = UIToolbar()
+        textView.delegate = self
         
-//        let action = UIBarButtonItem(systemItem: UIBarButtonItem.SystemItem.action)
-//        let edit = UIBarButtonItem(systemItem: UIBarButtonItem.SystemItem.edit)
-//        let bookmarks = UIBarButtonItem(systemItem: UIBarButtonItem.SystemItem.bookmarks)
+        let bar = UIToolbar()
+        let flexibleSpace = UIBarButtonItem(systemItem: UIBarButtonItem.SystemItem.fixedSpace)
         let addImageBarItem = UIBarButtonItem(title: "image", style: UIBarButtonItem.Style.plain, target: nil, action: #selector(showPickerImage))
-        bar.items = [addImageBarItem]
+        bar.items = [addImageBarItem, flexibleSpace]
         
         bar.sizeToFit()
         textView.inputAccessoryView = bar
@@ -56,15 +55,18 @@ class DetailNoteViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .white
         navigationController?.navigationItem.largeTitleDisplayMode = .never
+        
         if style == .detail {
             if let note = note {
                 noteTextView.text = note.notes
-                if let image = UIImage(data: note.imageData) {
-                    addImageInTextView(image: image)
-                }
+                print(#line)
+                getImageFromNote(note: note)//.forEach {addImageInTextView(image: $0)}
             }
         }
+        
         setupLayout()
+        
+        noteTextView.layoutManager.allowsNonContiguousLayout = false
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -81,10 +83,13 @@ class DetailNoteViewController: UIViewController {
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        if style == .new && !noteTextView.text.isEmpty {
-           createNewNote()
-        } else {
-            updateNote()
+        
+        if (self.isMovingFromParent || self.isBeingDismissed) {
+            if style == .new && !noteTextView.text.isEmpty {
+               createNewNote()
+            } else if style == .detail {
+                updateNote()
+            }
         }
     }
     
@@ -101,30 +106,46 @@ class DetailNoteViewController: UIViewController {
     }
     
     private func createNewNote() {
-        let managedContext = AppDelegate.sharedAppDelegate.coreDataStack.managedContext
-        let newNote = Note(context: managedContext)
-        newNote.id = note?.id ?? UUID()
-        newNote.notes = noteTextView.text
-        newNote.createDate = Date()
-        if let image = getImagesFromTextView().first, let imageData = image.pngData() {
-            newNote.imageData = imageData
-        }
+        let coreDataStack = AppDelegate.sharedAppDelegate.coreDataStack
         
+        let newNote = coreDataStack.createNote(note: noteTextView.text)//Note(context: managedContext)
+
+        if !getImagesFromTextView().isEmpty {
+            for image in getImagesFromTextView() {
+                if let imageData = image.pngData() {
+                    coreDataStack.createImage(imageData: imageData, note: newNote)
+                }
+            }
+        }
+
         if let comptelion = self.comptelion {
             comptelion(newNote)
         }
 
-        AppDelegate.sharedAppDelegate.coreDataStack.saveContext()
+        coreDataStack.saveContext()
     }
     
     private func updateNote() {
         guard let note = note else { return }
         note.notes = noteTextView.text
+        let coreDataStack = AppDelegate.sharedAppDelegate.coreDataStack
+        
+        // нужно подумать над сравнением и удалением/добавлением отдельных image
+        let oldNoteImages = coreDataStack.getImages(note: note)
+        oldNoteImages.forEach { coreDataStack.deleteImage(image: $0)}
+        
+        if !getImagesFromTextView().isEmpty {
+            for image in getImagesFromTextView() {
+                if let imageData = image.pngData() {
+                    coreDataStack.createImage(imageData: imageData, note: note)
+                }
+            }
+        }
         
         if let comptelion = self.comptelion {
             comptelion(note)
         }
-        AppDelegate.sharedAppDelegate.coreDataStack.saveContext()
+        coreDataStack.saveContext()
     }
     
     @objc
@@ -183,4 +204,31 @@ extension DetailNoteViewController: UIImagePickerControllerDelegate, UINavigatio
                 })
         return imagesArray
     }
+    
+    private func getImageFromNote(note: Note) {
+        DispatchQueue.global().async {
+            let imagesArray = AppDelegate.sharedAppDelegate.coreDataStack.getImages(note: note)
+             for image in imagesArray {
+                 if let imageData = image.imageData {
+                     DispatchQueue.main.async {
+                         if let im = UIImage(data: imageData) {
+                             self.addImageInTextView(image: im)
+                         }
+                     }
+                 }
+             }
+        }
+    }
+}
+
+extension DetailNoteViewController: UITextViewDelegate {
+//    func textViewDidBeginEditing(_ textView: UITextView) {
+//        textView.setContentOffset(CGPoint(x: 0, y: textView.center.y / 2), animated: true)
+//        viewDidLayoutSubviews()
+//    }
+//
+//    func textViewDidEndEditing(_ textView: UITextView) {
+//        textView.setContentOffset(CGPoint(x: 0, y: 0), animated: true)
+//        viewDidLayoutSubviews()
+//    }
 }

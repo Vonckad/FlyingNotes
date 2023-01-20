@@ -6,7 +6,7 @@
 //
 
 import UIKit
-import CoreData
+//import CoreData
 
 class ViewController: UIViewController {
 
@@ -18,21 +18,18 @@ class ViewController: UIViewController {
         var notesArray: [Note] = []
         let defaults = UserDefaults.standard
         if !defaults.bool(forKey: "First Launch") {
-        
             defaults.set(true, forKey: "First Launch")
             
-            let managedContext = AppDelegate.sharedAppDelegate.coreDataStack.managedContext
-            let startNote = Note(context: managedContext)
-            startNote.id = UUID()
-            startNote.notes =
+            let coreDataStack = AppDelegate.sharedAppDelegate.coreDataStack
+            let startString =
 """
 Начало работы в приложении «FlyingNotes»
 
 В приложении «FlyingNotes»  можно быстро записать свои мысли.
 """
-            startNote.createDate = Date()
+            let startNote = coreDataStack.createNote(note: startString)
             notesArray.append(startNote)
-            AppDelegate.sharedAppDelegate.coreDataStack.saveContext()
+            coreDataStack.saveContext()
         }
         return notesArray
     }()
@@ -84,17 +81,8 @@ class ViewController: UIViewController {
     }
     
     private func getNotes() {
-        let noteFetch: NSFetchRequest<Note> = Note.fetchRequest()
-        let sortByDate = NSSortDescriptor(key: #keyPath(Note.createDate), ascending: false)
-        noteFetch.sortDescriptors = [sortByDate]
-        do {
-            let managedContext = AppDelegate.sharedAppDelegate.coreDataStack.managedContext
-            let results = try managedContext.fetch(noteFetch)
-            notes = results
-            self.updateSnapshot()
-        } catch let error as NSError {
-            print("Fetch error: \(error) description: \(error.userInfo)")
-        }
+        notes = AppDelegate.sharedAppDelegate.coreDataStack.getNotes()
+        updateSnapshot()
     }
     
     @objc
@@ -155,10 +143,10 @@ class ViewController: UIViewController {
         let deleteActionTitle = NSLocalizedString("Delete", comment: "Delete action title")
         let deleteAction = UIContextualAction(style: .destructive, title: deleteActionTitle) { [weak self] _, _, _ in
             guard let self = self else { return }
-            AppDelegate.sharedAppDelegate.coreDataStack.managedContext.delete(self.notes[indexPath.item])
+            let deleteNote = self.notes[indexPath.item]
+            AppDelegate.sharedAppDelegate.coreDataStack.deleteNote(note: deleteNote)
             self.notes.remove(at: indexPath.item)
             self.updateSnapshot()
-            AppDelegate.sharedAppDelegate.coreDataStack.saveContext()
         }
         return UISwipeActionsConfiguration(actions: [deleteAction])
     }
