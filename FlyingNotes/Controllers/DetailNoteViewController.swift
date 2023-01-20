@@ -27,6 +27,15 @@ class DetailNoteViewController: UIViewController {
         textView.textColor = .darkGray
         textView.clipsToBounds = true
         textView.alwaysBounceVertical = true
+        textView.delegate = self
+        
+        let bar = UIToolbar()
+        let flexibleSpace = UIBarButtonItem(systemItem: UIBarButtonItem.SystemItem.fixedSpace)
+        let addImageBarItem = UIBarButtonItem(title: "image", style: UIBarButtonItem.Style.plain, target: nil, action: #selector(showPickerImage))
+        bar.items = [addImageBarItem, flexibleSpace]
+        
+        bar.sizeToFit()
+        textView.inputAccessoryView = bar
         return textView
     }()
     
@@ -46,8 +55,18 @@ class DetailNoteViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .white
         navigationController?.navigationItem.largeTitleDisplayMode = .never
-        noteTextView.text = style == .detail ? note?.notes : ""
+        
+        if style == .detail {
+            if let note = note {
+                noteTextView.text = note.notes
+                print(#line)
+                getImageFromNote(note: note)//.forEach {addImageInTextView(image: $0)}
+            }
+        }
+        
         setupLayout()
+        
+        noteTextView.layoutManager.allowsNonContiguousLayout = false
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -64,10 +83,13 @@ class DetailNoteViewController: UIViewController {
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        if style == .new && !noteTextView.text.isEmpty {
-           createNewNote()
-        } else {
-            updateNote()
+        
+        if (self.isMovingFromParent || self.isBeingDismissed) {
+            if style == .new && !noteTextView.text.isEmpty {
+               createNewNote()
+            } else if style == .detail {
+                updateNote()
+            }
         }
     }
     
@@ -84,26 +106,129 @@ class DetailNoteViewController: UIViewController {
     }
     
     private func createNewNote() {
-        let managedContext = AppDelegate.sharedAppDelegate.coreDataStack.managedContext
-        let newNote = Note(context: managedContext)
-        newNote.id = note?.id ?? UUID()
-        newNote.notes = noteTextView.text
-        newNote.createDate = Date()
+        let coreDataStack = AppDelegate.sharedAppDelegate.coreDataStack
         
+        let newNote = coreDataStack.createNote(note: noteTextView.text)//Note(context: managedContext)
+
+        if !getImagesFromTextView().isEmpty {
+            for image in getImagesFromTextView() {
+                if let imageData = image.pngData() {
+                    coreDataStack.createImage(imageData: imageData, note: newNote)
+                }
+            }
+        }
+
         if let comptelion = self.comptelion {
             comptelion(newNote)
         }
 
-        AppDelegate.sharedAppDelegate.coreDataStack.saveContext()
+        coreDataStack.saveContext()
     }
     
     private func updateNote() {
         guard let note = note else { return }
         note.notes = noteTextView.text
+        let coreDataStack = AppDelegate.sharedAppDelegate.coreDataStack
+        
+        // нужно подумать над сравнением и удалением/добавлением отдельных image
+        let oldNoteImages = coreDataStack.getImages(note: note)
+        oldNoteImages.forEach { coreDataStack.deleteImage(image: $0)}
+        
+        if !getImagesFromTextView().isEmpty {
+            for image in getImagesFromTextView() {
+                if let imageData = image.pngData() {
+                    coreDataStack.createImage(imageData: imageData, note: note)
+                }
+            }
+        }
         
         if let comptelion = self.comptelion {
             comptelion(note)
         }
-        AppDelegate.sharedAppDelegate.coreDataStack.saveContext()
+        coreDataStack.saveContext()
     }
+    
+    @objc
+    private func showPickerImage() {
+     let pickerImage = UIImagePickerController()
+        pickerImage.modalPresentationStyle = .currentContext
+        pickerImage.allowsEditing = true
+        pickerImage.mediaTypes = ["public.image"]
+        pickerImage.sourceType = .photoLibrary
+        pickerImage.delegate = self
+        present(pickerImage, animated: true)
+    }
+}
+
+extension DetailNoteViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        
+        guard let image = info[.editedImage] as? UIImage else { return }
+        addImageInTextView(image: image)
+        picker.dismiss(animated: true, completion: nil)
+    }
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true, completion: nil)
+    }
+    
+    private func addImageInTextView(image: UIImage) {
+        let textAttachment = NSTextAttachment(image: image)
+        let oldWidth = textAttachment.image!.size.width
+        let scaleFactor = oldWidth / (noteTextView.frame.size.width - 50)
+        
+        textAttachment.image = UIImage(cgImage: textAttachment.image!.cgImage!, scale: scaleFactor, orientation: .up)
+        let attrStringWithImage = NSAttributedString(attachment: textAttachment)
+        noteTextView.textStorage.insert(attrStringWithImage, at: noteTextView.selectedRange.location)
+        noteTextView.font = .systemFont(ofSize: 24, weight: .regular)
+    }
+    
+    private func getImagesFromTextView() -> [UIImage] {
+        var imagesArray = [UIImage]()
+
+        noteTextView.attributedText.enumerateAttribute(NSAttributedString.Key.attachment, in: NSRange(location: 0, length: noteTextView.attributedText.length), options: [], using: {(value,range,stop) -> Void in
+                    if (value is NSTextAttachment) {
+                        let attachment: NSTextAttachment? = (value as? NSTextAttachment)
+                        var image: UIImage? = nil
+
+                        if ((attachment?.image) != nil) {
+                            image = attachment?.image
+                        } else {
+                            image = attachment?.image(forBounds: (attachment?.bounds)!, textContainer: nil, characterIndex: range.location)
+                        }
+
+                        if let image = image {
+                          imagesArray.append(image)
+                        }
+                    }
+                })
+        return imagesArray
+    }
+    
+    private func getImageFromNote(note: Note) {
+        DispatchQueue.global().async {
+            let imagesArray = AppDelegate.sharedAppDelegate.coreDataStack.getImages(note: note)
+             for image in imagesArray {
+                 if let imageData = image.imageData {
+                     DispatchQueue.main.async {
+                         if let im = UIImage(data: imageData) {
+                             self.addImageInTextView(image: im)
+                         }
+                     }
+                 }
+             }
+        }
+    }
+}
+
+extension DetailNoteViewController: UITextViewDelegate {
+//    func textViewDidBeginEditing(_ textView: UITextView) {
+//        textView.setContentOffset(CGPoint(x: 0, y: textView.center.y / 2), animated: true)
+//        viewDidLayoutSubviews()
+//    }
+//
+//    func textViewDidEndEditing(_ textView: UITextView) {
+//        textView.setContentOffset(CGPoint(x: 0, y: 0), animated: true)
+//        viewDidLayoutSubviews()
+//    }
 }
