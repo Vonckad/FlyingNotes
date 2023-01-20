@@ -58,9 +58,10 @@ class ViewController: UIViewController {
         navigationItem.largeTitleDisplayMode = .always
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationController?.navigationBar.barTintColor = bacgroundColor
-        navigationController?.navigationBar.titleTextAttributes = [.foregroundColor : UIColor.darkGray]
-        navigationController?.navigationBar.largeTitleTextAttributes = [.foregroundColor : UIColor.darkGray]
+        navigationController?.navigationBar.titleTextAttributes = [.foregroundColor : UIColor.black]
+        navigationController?.navigationBar.largeTitleTextAttributes = [.foregroundColor : UIColor.black]
         navigationController?.navigationBar.tintColor = .darkGray
+        navigationController?.navigationBar.shadowImage = nil
     }
     
 //MARK: - private
@@ -101,7 +102,7 @@ class ViewController: UIViewController {
         var listConfiguration = UICollectionLayoutListConfiguration(appearance: .insetGrouped)
         listConfiguration.trailingSwipeActionsConfigurationProvider = makeSwipeActions
         listConfiguration.backgroundColor = bacgroundColor
-        listConfiguration.separatorConfiguration.color = .darkGray
+        listConfiguration.separatorConfiguration.color = .gray
         return UICollectionViewCompositionalLayout.list(using: listConfiguration)
     }
     
@@ -125,7 +126,7 @@ class ViewController: UIViewController {
             configuration.secondaryTextProperties.color = .gray
             configuration.secondaryTextProperties.font = UIFont.systemFont(ofSize: 13)
             configuration.textProperties.font = UIFont.systemFont(ofSize: 20)
-            configuration.textProperties.color = .darkGray
+            configuration.textProperties.color = .black
             configuration.textProperties.numberOfLines = 1
             cell.contentConfiguration = configuration
             

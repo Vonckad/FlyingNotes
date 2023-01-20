@@ -24,7 +24,7 @@ class DetailNoteViewController: UIViewController {
         textView.textContainerInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
         textView.keyboardDismissMode = .onDrag
         textView.backgroundColor = .white
-        textView.textColor = .darkGray
+        textView.textColor = .black
         textView.clipsToBounds = true
         textView.alwaysBounceVertical = true
         textView.delegate = self
@@ -35,11 +35,11 @@ class DetailNoteViewController: UIViewController {
         photoItem.tintColor = .darkGray
         bar.setItems([flexibleSpace, photoItem], animated: true)
         bar.sizeToFit()
+        bar.barTintColor = .white
+        bar.setShadowImage(UIImage(), forToolbarPosition: .any)
         textView.inputAccessoryView = bar
         return textView
     }()
-    
-    let bacgroundColor = UIColor.init(red: 243/255, green: 242/255, blue: 247/255, alpha: 1.0)
     
 //MARK: - LifeCycle
     init(style: DetailStyle, note: Note? = nil, comptelion: ((Note) -> ())? = nil) {
@@ -55,7 +55,7 @@ class DetailNoteViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = bacgroundColor
+        view.backgroundColor = .white
         navigationController?.navigationItem.largeTitleDisplayMode = .never
         
         if style == .detail {
@@ -72,6 +72,8 @@ class DetailNoteViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationItem.largeTitleDisplayMode = .never
+        navigationController?.navigationBar.shadowImage = UIImage()
+        navigationController?.navigationBar.barTintColor = .white
         noteTextView.layer.cornerRadius = 8
     }
     
